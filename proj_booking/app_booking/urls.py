@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from app_booking.views import ClubAV, SlotAV
+from app_booking.views import ClubAV, SlotAV, BookAV
 
 urlpatterns = [
 
@@ -24,5 +24,7 @@ urlpatterns = [
     # path('allclubs/',all_clubs, name="clubslist"),
     # path('allavailable/', all_available, name="availableclubs"),
     path('listclubs/', ClubAV.as_view(), name="bookclub"),
-    path('listslot/', SlotAV.as_view(), name='listslot')
+    path('listslot/', SlotAV.as_view(), name='listslot'),
+    path('bookslot/', BookAV.as_view(), name='bookslot'),
+    
 ]

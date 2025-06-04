@@ -26,13 +26,13 @@ class SlotAV(APIView):
         input_date = request.query_params.get('date')
 
         if not input_date:
-            return response.Response(data=f"Invalid Date", status=400)     
+            return response.Response(data={"Response": f"Invalid Date"}, status=400)      
         else:
             # Check if the date is in correct format
             try:
                 formatted_date = datetime.datetime.strptime(input_date, "%Y-%m-%d").strftime("%Y-%m-%d")
             except:
-                return response.Response(data=f"Invalid Date", status=400)   
+                return response.Response(data={"Response": f"Invalid Date"}, status=400)   
 
             if sport_name and club_name:
             
@@ -40,7 +40,7 @@ class SlotAV(APIView):
                 clubs_serializer = ClubSerializer(clubs, many=True) 
 
                 if not clubs_serializer.data: # Check if the relevant sports club offered select sport
-                    return response.Response(data=f"""Sport {sport_name} is not available at {club_name}. Either sport name is incorrect or club name""")
+                    return response.Response(data={"Response" : f"""Sport {sport_name} is not available at {club_name}. Either sport name is incorrect or club name"""})
                 else:
                     slots = Slot.objects.filter(sport__name=sport_name, club__name=club_name, slot_date=formatted_date)
                     slots_serializer = SlotSerializer(slots, many=True)
@@ -76,3 +76,51 @@ class SlotAV(APIView):
             
             else:
                 return response.Response(status=400, data="Bad Request")
+            
+
+
+class BookAV(APIView):
+
+    def post(self, request):
+        request_params = request.query_params.copy()
+    
+        
+        slot_time = request.query_params.get('slot')
+        check_slot = SlotAV.get(self,request=request)
+        if check_slot.status_code == 200 and check_slot.data and check_slot.data.get(slot_time):
+            
+            # if check_slot.data.get(slot_time):
+            #     data = {"Response": f"Slot Available\n{str(check_slot.data.get(slot_time))}"}
+            # else:
+            #     data = {"Response": str(check_slot.data.get(slot_time))}
+            # return JsonResponse(data=data)
+
+            club = request.query_params.get('club')
+            sport = request.query_params.get('sport')
+
+            club_objects = SportsClub.objects.filter(name=club)
+            club_id = (ClubSerializer(club_objects, many=True).data)[0].get('id')
+            sport_objects = Sport.objects.filter(name=sport)
+            sport_id = (SportSerializer(sport_objects, many=True).data)[0].get('id')
+            
+            request_params["club"] = club_id
+            request_params["sport"] = sport_id
+            request_params["slot_time"] = request_params["slot"]
+            request_params["slot_date"] = request_params["date"]
+            del request_params["slot"]
+            del request_params["date"]
+           
+            slot_serializer = SlotSerializer(data=request_params)
+            if slot_serializer.is_valid():
+                slot_serializer.save()
+                return JsonResponse(data=slot_serializer.data)
+            else:
+                data = {"Response": f"Invalidated Data\n{slot_serializer.errors}"}
+                return JsonResponse(data=data)
+            
+        elif check_slot.data.get("Response"):
+            return response.Response(data=check_slot.data, status=check_slot.status_code)
+        
+        else:
+        
+            return response.Response(data="Selected slot is not available. Please book another slot.")
