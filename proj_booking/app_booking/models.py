@@ -38,6 +38,7 @@ class Slot(models.Model):
     club = models.ForeignKey(SportsClub, on_delete=models.CASCADE, related_name='slots')
     sport = models.ForeignKey(Sport, on_delete=models.CASCADE)
     slot_time = models.TextField(choices=SLOT_DICT)
+    slot_date = models.DateField()
     book_time = models.DateTimeField(auto_now_add=True)
 
     def clean(self):
